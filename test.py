@@ -30,6 +30,10 @@ cursor.execute(
 )
 conn.commit()
 
+
+# 프로그램 호출 시각
+current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 # 각 프로그램 정보를 크롤링하여 데이터베이스에 삽입
 for data in tag_ul.find_all("li"):
     # 프로그램 제목
@@ -45,15 +49,10 @@ for data in tag_ul.find_all("li"):
     image = img_style[strat:end]
 
     # 프로그램 업데이트 시각
-    created_time_element = data_link.find("span", {"class": "created-time"})
+    created_time_element = data_link.find("time")["datetime"]
 
-    if created_time_element:
-        created_time = created_time_element.get_text(strip=True)
-    else:
-        created_time = None
-
-    # 프로그램 호출 시각
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    created_time = datetime.fromisoformat(created_time_element)
+    created_time = created_time.strftime("%Y-%m-%d %H:%M:%S")
 
     # 프로그램 내용 가져오기 (이전 내용 유지)
     content_url = "https://fun.ssu.ac.kr" + data_link.get("href")
@@ -70,9 +69,10 @@ for data in tag_ul.find_all("li"):
                 content += f"Image: {img_src}\n"
             elif tag.find("a"):
                 link_tag = tag.find("a")
-                link_href = link_tag["href"]
-                link_text = link_tag.get_text(strip=True)
-                content += f"Link: {link_text} - {link_href}\n"
+                if link_tag and "href" in link_tag.attrs:
+                    link_href = link_tag["href"]
+                    link_text = link_tag.get_text(strip=True)
+                    content += f"Link: {link_text} - {link_href}\n"
             elif tag.find("iframe"):
                 link_tag = tag.find("iframe")
                 link_href = link_tag["src"]
